@@ -14,10 +14,13 @@ use descriptor::pipeline_layout::PipelineLayoutAbstract;
 use descriptor::pipeline_layout::PipelineLayoutPushConstantsCompatible;
 
 /// Checks whether push constants are compatible with the pipeline.
-pub fn check_push_constants_validity<Pl, Pc>(pipeline: &Pl, push_constants: &Pc)
-                                             -> Result<(), CheckPushConstantsValidityError>
-    where Pl: ?Sized + PipelineLayoutAbstract + PipelineLayoutPushConstantsCompatible<Pc>,
-          Pc: ?Sized
+pub fn check_push_constants_validity<Pl, Pc>(
+    pipeline: &Pl,
+    push_constants: &Pc,
+) -> Result<(), CheckPushConstantsValidityError>
+where
+    Pl: ?Sized + PipelineLayoutAbstract + PipelineLayoutPushConstantsCompatible<Pc>,
+    Pc: ?Sized,
 {
     if !pipeline.is_compatible(push_constants) {
         return Err(CheckPushConstantsValidityError::IncompatiblePushConstants);
@@ -33,20 +36,15 @@ pub enum CheckPushConstantsValidityError {
     IncompatiblePushConstants,
 }
 
-impl error::Error for CheckPushConstantsValidityError {
-    #[inline]
-    fn description(&self) -> &str {
-        match *self {
-            CheckPushConstantsValidityError::IncompatiblePushConstants => {
-                "the push constants are incompatible with the pipeline layout"
-            },
-        }
-    }
-}
+impl error::Error for CheckPushConstantsValidityError {}
 
 impl fmt::Display for CheckPushConstantsValidityError {
     #[inline]
     fn fmt(&self, fmt: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write!(fmt, "{}", error::Error::description(self))
+        write!(fmt, "{}", match *self {
+            CheckPushConstantsValidityError::IncompatiblePushConstants => {
+                "the push constants are incompatible with the pipeline layout"
+            }
+        })
     }
 }

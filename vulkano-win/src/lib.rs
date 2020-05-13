@@ -12,10 +12,10 @@ use vulkano::instance::Instance;
 use vulkano::instance::InstanceExtensions;
 use vulkano::swapchain::Surface;
 use vulkano::swapchain::SurfaceCreationError;
-use winit::window::Window;
-use winit::window::WindowBuilder;
 use winit::error::OsError as WindowCreationError;
 use winit::event_loop::EventLoopWindowTarget;
+use winit::window::Window;
+use winit::window::WindowBuilder;
 
 #[cfg(target_os = "macos")]
 use cocoa::appkit::{NSView, NSWindow};
@@ -53,7 +53,8 @@ pub fn required_extensions() -> InstanceExtensions {
 /// Create a surface from the window type `W`. The surface borrows the window
 /// to prevent it from being dropped before the surface.
 pub fn create_vk_surface<W>(
-    window: W, instance: Arc<Instance>
+    window: W,
+    instance: Arc<Instance>,
 ) -> Result<Arc<Surface<W>>, SurfaceCreationError>
 where
     W: SafeBorrow<Window>,
@@ -63,13 +64,17 @@ where
 
 pub trait VkSurfaceBuild<E> {
     fn build_vk_surface(
-        self, event_loop: &EventLoopWindowTarget<E>, instance: Arc<Instance>,
+        self,
+        event_loop: &EventLoopWindowTarget<E>,
+        instance: Arc<Instance>,
     ) -> Result<Arc<Surface<Window>>, CreationError>;
 }
 
 impl<E> VkSurfaceBuild<E> for WindowBuilder {
     fn build_vk_surface(
-        self, event_loop: &EventLoopWindowTarget<E>, instance: Arc<Instance>,
+        self,
+        event_loop: &EventLoopWindowTarget<E>,
+        instance: Arc<Instance>,
     ) -> Result<Arc<Surface<Window>>, CreationError> {
         let window = self.build(event_loop)?;
         Ok(create_vk_surface(window, instance)?)
@@ -87,14 +92,6 @@ pub enum CreationError {
 
 impl error::Error for CreationError {
     #[inline]
-    fn description(&self) -> &str {
-        match *self {
-            CreationError::SurfaceCreationError(_) => "error while creating the surface",
-            CreationError::WindowCreationError(_) => "error while creating the window",
-        }
-    }
-
-    #[inline]
     fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
             CreationError::SurfaceCreationError(ref err) => Some(err),
@@ -106,7 +103,10 @@ impl error::Error for CreationError {
 impl fmt::Display for CreationError {
     #[inline]
     fn fmt(&self, fmt: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write!(fmt, "{}", error::Error::description(self))
+        write!(fmt, "{}", match *self {
+            CreationError::SurfaceCreationError(_) => "error while creating the surface",
+            CreationError::WindowCreationError(_) => "error while creating the window",
+        })
     }
 }
 
@@ -126,7 +126,8 @@ impl From<WindowCreationError> for CreationError {
 
 #[cfg(target_os = "android")]
 unsafe fn winit_to_surface<W: SafeBorrow<Window>>(
-    instance: Arc<Instance>, win: W,
+    instance: Arc<Instance>,
+    win: W,
 ) -> Result<Arc<Surface<W>>, SurfaceCreationError> {
     use winit::platform::android::WindowExtAndroid;
 
@@ -135,7 +136,8 @@ unsafe fn winit_to_surface<W: SafeBorrow<Window>>(
 
 #[cfg(all(unix, not(target_os = "android"), not(target_os = "macos")))]
 unsafe fn winit_to_surface<W: SafeBorrow<Window>>(
-    instance: Arc<Instance>, win: W,
+    instance: Arc<Instance>,
+    win: W,
 ) -> Result<Arc<Surface<W>>, SurfaceCreationError> {
     use winit::platform::unix::WindowExtUnix;
 
@@ -162,13 +164,14 @@ unsafe fn winit_to_surface<W: SafeBorrow<Window>>(
                     win,
                 )
             }
-        },
+        }
     }
 }
 
 #[cfg(target_os = "windows")]
 unsafe fn winit_to_surface<W: SafeBorrow<Window>>(
-    instance: Arc<Instance>, win: W,
+    instance: Arc<Instance>,
+    win: W,
 ) -> Result<Arc<Surface<W>>, SurfaceCreationError> {
     use winit::platform::windows::WindowExtWindows;
 
@@ -182,9 +185,10 @@ unsafe fn winit_to_surface<W: SafeBorrow<Window>>(
 
 #[cfg(target_os = "macos")]
 unsafe fn winit_to_surface<W: SafeBorrow<Window>>(
-    instance: Arc<Instance>, win: W,
+    instance: Arc<Instance>,
+    win: W,
 ) -> Result<Arc<Surface<W>>, SurfaceCreationError> {
-    use winit::platform::macos::WindowExtMacOS ;
+    use winit::platform::macos::WindowExtMacOS;
 
     let wnd: cocoa_id = mem::transmute(win.borrow().ns_window());
     let layer = CoreAnimationLayer::new();

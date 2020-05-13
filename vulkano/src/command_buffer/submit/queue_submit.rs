@@ -19,12 +19,12 @@ use sync::Fence;
 use sync::PipelineStages;
 use sync::Semaphore;
 
+use check_errors;
+use vk;
 use Error;
 use OomError;
 use SynchronizedVulkanObject;
 use VulkanObject;
-use check_errors;
-use vk;
 
 /// Prototype for a submission that executes command buffers.
 // TODO: example here
@@ -231,8 +231,10 @@ impl<'a> SubmitCommandBufferBuilder<'a> {
     /// Panics if both builders have a fence already set.
     // TODO: create multiple batches instead
     pub fn merge(mut self, other: Self) -> Self {
-        assert!(self.fence == 0 || other.fence == 0,
-                "Can't merge two queue submits that both have a fence");
+        assert!(
+            self.fence == 0 || other.fence == 0,
+            "Can't merge two queue submits that both have a fence"
+        );
 
         self.wait_semaphores.extend(other.wait_semaphores);
         self.destination_stages.extend(other.destination_stages); // TODO: meh? will be solved if we submit multiple batches
@@ -260,14 +262,6 @@ pub enum SubmitCommandBufferError {
 
 impl error::Error for SubmitCommandBufferError {
     #[inline]
-    fn description(&self) -> &str {
-        match *self {
-            SubmitCommandBufferError::OomError(_) => "not enough memory",
-            SubmitCommandBufferError::DeviceLost => "the connection to the device has been lost",
-        }
-    }
-
-    #[inline]
     fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
             SubmitCommandBufferError::OomError(ref err) => Some(err),
@@ -279,7 +273,10 @@ impl error::Error for SubmitCommandBufferError {
 impl fmt::Display for SubmitCommandBufferError {
     #[inline]
     fn fmt(&self, fmt: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write!(fmt, "{}", error::Error::description(self))
+        write!(fmt, "{}", match *self {
+            SubmitCommandBufferError::OomError(_) => "not enough memory",
+            SubmitCommandBufferError::DeviceLost => "the connection to the device has been lost",
+        })
     }
 }
 
@@ -288,8 +285,9 @@ impl From<Error> for SubmitCommandBufferError {
     fn from(err: Error) -> SubmitCommandBufferError {
         match err {
             err @ Error::OutOfHostMemory => SubmitCommandBufferError::OomError(OomError::from(err)),
-            err @ Error::OutOfDeviceMemory =>
-                SubmitCommandBufferError::OomError(OomError::from(err)),
+            err @ Error::OutOfDeviceMemory => {
+                SubmitCommandBufferError::OomError(OomError::from(err))
+            }
             Error::DeviceLost => SubmitCommandBufferError::DeviceLost,
             _ => panic!("unexpected error: {:?}", err),
         }

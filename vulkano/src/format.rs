@@ -102,8 +102,8 @@
 //! // TODO: storage formats
 //!
 
-use std::{error, fmt, mem};
 use std::vec::IntoIter as VecIntoIter;
+use std::{error, fmt, mem};
 
 use half::f16;
 
@@ -139,17 +139,12 @@ unsafe impl Data for u8 {
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct IncompatiblePixelsType;
 
-impl error::Error for IncompatiblePixelsType {
-    #[inline]
-    fn description(&self) -> &str {
-        "supplied pixels' type is incompatible with this format"
-    }
-}
+impl error::Error for IncompatiblePixelsType {}
 
 impl fmt::Display for IncompatiblePixelsType {
     #[inline]
     fn fmt(&self, fmt: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write!(fmt, "{}", error::Error::description(self))
+        write!(fmt, "{}", "supplied pixels' type is incompatible with this format")
     }
 }
 
@@ -927,7 +922,6 @@ impl From<(f32, u32)> for ClearValue {
         ClearValue::DepthStencil(val)
     }
 }
-
 
 // TODO: remove once no longer needed
 pub unsafe trait ClearValuesTuple {

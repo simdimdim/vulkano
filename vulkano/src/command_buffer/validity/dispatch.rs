@@ -21,9 +21,9 @@ pub fn check_dispatch(device: &Device, dimensions: [u32; 3]) -> Result<(), Check
 
     if dimensions[0] > max[0] || dimensions[1] > max[1] || dimensions[2] > max[2] {
         return Err(CheckDispatchError::UnsupportedDimensions {
-                       requested: dimensions,
-                       max_supported: max,
-                   });
+            requested: dimensions,
+            max_supported: max,
+        });
     }
 
     Ok(())
@@ -41,21 +41,16 @@ pub enum CheckDispatchError {
     },
 }
 
-impl error::Error for CheckDispatchError {
-    #[inline]
-    fn description(&self) -> &str {
-        match *self {
-            CheckDispatchError::UnsupportedDimensions { .. } => {
-                "the dimensions are too large for the device's limits"
-            },
-        }
-    }
-}
+impl error::Error for CheckDispatchError {}
 
 impl fmt::Display for CheckDispatchError {
     #[inline]
     fn fmt(&self, fmt: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write!(fmt, "{}", error::Error::description(self))
+        write!(fmt, "{}", match *self {
+            CheckDispatchError::UnsupportedDimensions { .. } => {
+                "the dimensions are too large for the device's limits"
+            }
+        })
     }
 }
 
@@ -73,7 +68,8 @@ mod tests {
         if device
             .physical_device()
             .limits()
-            .max_compute_work_group_count() == attempted
+            .max_compute_work_group_count()
+            == attempted
         {
             return;
         }
@@ -81,7 +77,7 @@ mod tests {
         match validity::check_dispatch(&device, attempted) {
             Err(validity::CheckDispatchError::UnsupportedDimensions { requested, .. }) => {
                 assert_eq!(requested, attempted);
-            },
+            }
             _ => panic!(),
         }
     }

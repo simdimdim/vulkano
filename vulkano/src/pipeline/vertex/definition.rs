@@ -11,15 +11,16 @@ use std::error;
 use std::fmt;
 use std::sync::Arc;
 
-use SafeDeref;
 use buffer::BufferAccess;
 use format::Format;
 use pipeline::vertex::VertexMemberTy;
 use vk;
+use SafeDeref;
 
 /// Trait for types that describe the definition of the vertex input used by a graphics pipeline.
-pub unsafe trait VertexDefinition<I>
-    : VertexSource<Vec<Arc<dyn BufferAccess + Send + Sync>>> {
+pub unsafe trait VertexDefinition<I>:
+    VertexSource<Vec<Arc<dyn BufferAccess + Send + Sync>>>
+{
     /// Iterator that returns the offset, the stride (in bytes) and input rate of each buffer.
     type BuffersIter: ExactSizeIterator<Item = (u32, usize, InputRate)>;
     /// Iterator that returns the attribute location, buffer id, and infos.
@@ -28,21 +29,24 @@ pub unsafe trait VertexDefinition<I>
     /// Builds the vertex definition to use to link this definition to a vertex shader's input
     /// interface.
     fn definition(
-        &self, interface: &I)
-        -> Result<(Self::BuffersIter, Self::AttribsIter), IncompatibleVertexDefinitionError>;
+        &self,
+        interface: &I,
+    ) -> Result<(Self::BuffersIter, Self::AttribsIter), IncompatibleVertexDefinitionError>;
 }
 
 unsafe impl<I, T> VertexDefinition<I> for T
-    where T: SafeDeref,
-          T::Target: VertexDefinition<I>
+where
+    T: SafeDeref,
+    T::Target: VertexDefinition<I>,
 {
     type BuffersIter = <T::Target as VertexDefinition<I>>::BuffersIter;
     type AttribsIter = <T::Target as VertexDefinition<I>>::AttribsIter;
 
     #[inline]
     fn definition(
-        &self, interface: &I)
-        -> Result<(Self::BuffersIter, Self::AttribsIter), IncompatibleVertexDefinitionError> {
+        &self,
+        interface: &I,
+    ) -> Result<(Self::BuffersIter, Self::AttribsIter), IncompatibleVertexDefinitionError> {
         (**self).definition(interface)
     }
 }
@@ -87,25 +91,19 @@ pub enum IncompatibleVertexDefinitionError {
     },
 }
 
-impl error::Error for IncompatibleVertexDefinitionError {
-    #[inline]
-    fn description(&self) -> &str {
-        match *self {
-            IncompatibleVertexDefinitionError::MissingAttribute { .. } => "an attribute is missing",
-            IncompatibleVertexDefinitionError::FormatMismatch { .. } => {
-                "the format of an attribute does not match"
-            },
-        }
-    }
-}
+impl error::Error for IncompatibleVertexDefinitionError {}
 
 impl fmt::Display for IncompatibleVertexDefinitionError {
     #[inline]
     fn fmt(&self, fmt: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write!(fmt, "{}", error::Error::description(self))
+        write!(fmt, "{}", match *self {
+            IncompatibleVertexDefinitionError::MissingAttribute { .. } => "an attribute is missing",
+            IncompatibleVertexDefinitionError::FormatMismatch { .. } => {
+                "the format of an attribute does not match"
+            }
+        })
     }
 }
-
 
 /// Extension trait of `VertexDefinition`. The `L` parameter is an acceptable vertex source for this
 /// vertex definition.
@@ -118,8 +116,9 @@ pub unsafe trait VertexSource<L> {
 }
 
 unsafe impl<L, T> VertexSource<L> for T
-    where T: SafeDeref,
-          T::Target: VertexSource<L>
+where
+    T: SafeDeref,
+    T::Target: VertexSource<L>,
 {
     #[inline]
     fn decode(&self, list: L) -> (Vec<Box<dyn BufferAccess + Send + Sync>>, usize, usize) {
