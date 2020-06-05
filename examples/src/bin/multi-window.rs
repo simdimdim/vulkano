@@ -20,7 +20,7 @@ use vulkano::buffer::{BufferUsage, CpuAccessibleBuffer};
 use vulkano::command_buffer::{AutoCommandBufferBuilder, DynamicState};
 use vulkano::device::{Device, DeviceExtensions};
 use vulkano::framebuffer::{Framebuffer, FramebufferAbstract, RenderPassAbstract, Subpass};
-use vulkano::image::SwapchainImage;
+use vulkano::image::{ImageUsage, SwapchainImage};
 use vulkano::instance::{Instance, PhysicalDevice};
 use vulkano::pipeline::viewport::Viewport;
 use vulkano::pipeline::GraphicsPipeline;
@@ -97,7 +97,6 @@ fn main() {
     // The swapchain and framebuffer images for this perticular window
 
     let (swapchain, images) = {
-        let usage = surface_caps.supported_usage_flags;
         let alpha = surface_caps
             .supported_composite_alpha
             .iter()
@@ -113,7 +112,7 @@ fn main() {
             format,
             dimensions,
             1,
-            usage,
+            ImageUsage::color_attachment(),
             &queue,
             SurfaceTransform::Identity,
             alpha,
@@ -275,7 +274,6 @@ fn main() {
                 .unwrap();
             let window_id = surface.window().id();
             let (swapchain, images) = {
-                let usage = surface_caps.supported_usage_flags;
                 let alpha = surface_caps
                     .supported_composite_alpha
                     .iter()
@@ -291,7 +289,7 @@ fn main() {
                     format,
                     dimensions,
                     1,
-                    usage,
+                    ImageUsage::color_attachment(),
                     &queue,
                     SurfaceTransform::Identity,
                     alpha,
@@ -368,23 +366,24 @@ fn main() {
 
             let clear_values = vec![[0.0, 0.0, 1.0, 1.0].into()];
 
-            let command_buffer =
+            let mut builder =
                 AutoCommandBufferBuilder::primary_one_time_submit(device.clone(), queue.family())
-                    .unwrap()
-                    .begin_render_pass(framebuffers[image_num].clone(), false, clear_values)
-                    .unwrap()
-                    .draw(
-                        pipeline.clone(),
-                        &dynamic_state,
-                        vertex_buffer.clone(),
-                        (),
-                        (),
-                    )
-                    .unwrap()
-                    .end_render_pass()
-                    .unwrap()
-                    .build()
                     .unwrap();
+
+            builder
+                .begin_render_pass(framebuffers[image_num].clone(), false, clear_values)
+                .unwrap()
+                .draw(
+                    pipeline.clone(),
+                    &dynamic_state,
+                    vertex_buffer.clone(),
+                    (),
+                    (),
+                )
+                .unwrap()
+                .end_render_pass()
+                .unwrap();
+            let command_buffer = builder.build().unwrap();
 
             let future = previous_frame_end
                 .take()

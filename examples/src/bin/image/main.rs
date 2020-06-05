@@ -13,7 +13,7 @@ use vulkano::descriptor::descriptor_set::PersistentDescriptorSet;
 use vulkano::device::{Device, DeviceExtensions};
 use vulkano::format::Format;
 use vulkano::framebuffer::{Framebuffer, FramebufferAbstract, RenderPassAbstract, Subpass};
-use vulkano::image::{Dimensions, ImmutableImage, SwapchainImage};
+use vulkano::image::{Dimensions, ImageUsage, ImmutableImage, SwapchainImage};
 use vulkano::instance::{Instance, PhysicalDevice};
 use vulkano::pipeline::viewport::Viewport;
 use vulkano::pipeline::GraphicsPipeline;
@@ -74,8 +74,6 @@ fn main() {
 
     let (mut swapchain, images) = {
         let caps = surface.capabilities(physical).unwrap();
-
-        let usage = caps.supported_usage_flags;
         let alpha = caps.supported_composite_alpha.iter().next().unwrap();
         let format = caps.supported_formats[0].0;
         let dimensions: [u32; 2] = surface.window().inner_size().into();
@@ -87,7 +85,7 @@ fn main() {
             format,
             dimensions,
             1,
-            usage,
+            ImageUsage::color_attachment(),
             &queue,
             SurfaceTransform::Identity,
             alpha,
@@ -271,29 +269,29 @@ fn main() {
             }
 
             let clear_values = vec![[0.0, 0.0, 1.0, 1.0].into()];
-            let cb =
+            let mut builder =
                 AutoCommandBufferBuilder::primary_one_time_submit(device.clone(), queue.family())
-                    .unwrap()
-                    .begin_render_pass(framebuffers[image_num].clone(), false, clear_values)
-                    .unwrap()
-                    .draw(
-                        pipeline.clone(),
-                        &dynamic_state,
-                        vertex_buffer.clone(),
-                        set.clone(),
-                        (),
-                    )
-                    .unwrap()
-                    .end_render_pass()
-                    .unwrap()
-                    .build()
                     .unwrap();
+            builder
+                .begin_render_pass(framebuffers[image_num].clone(), false, clear_values)
+                .unwrap()
+                .draw(
+                    pipeline.clone(),
+                    &dynamic_state,
+                    vertex_buffer.clone(),
+                    set.clone(),
+                    (),
+                )
+                .unwrap()
+                .end_render_pass()
+                .unwrap();
+            let command_buffer = builder.build().unwrap();
 
             let future = previous_frame_end
                 .take()
                 .unwrap()
                 .join(acquire_future)
-                .then_execute(queue.clone(), cb)
+                .then_execute(queue.clone(), command_buffer)
                 .unwrap()
                 .then_swapchain_present(queue.clone(), swapchain.clone(), image_num)
                 .then_signal_fence_and_flush();
