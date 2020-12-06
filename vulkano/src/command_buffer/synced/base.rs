@@ -1,8 +1,8 @@
 // Copyright (c) 2016 The vulkano developers
 // Licensed under the Apache License, Version 2.0
 // <LICENSE-APACHE or
-// http://www.apache.org/licenses/LICENSE-2.0> or the MIT
-// license <LICENSE-MIT or http://opensource.org/licenses/MIT>,
+// https://www.apache.org/licenses/LICENSE-2.0> or the MIT
+// license <LICENSE-MIT or https://opensource.org/licenses/MIT>,
 // at your option. All files in the project carrying such
 // notice may not be copied, modified, or distributed except
 // according to those terms.
@@ -21,11 +21,11 @@ use command_buffer::pool::CommandPool;
 use command_buffer::pool::CommandPoolAlloc;
 use command_buffer::pool::CommandPoolBuilderAlloc;
 use command_buffer::sys::Flags;
-use command_buffer::sys::Kind;
 use command_buffer::sys::UnsafeCommandBuffer;
 use command_buffer::sys::UnsafeCommandBufferBuilder;
 use command_buffer::sys::UnsafeCommandBufferBuilderPipelineBarrier;
 use command_buffer::CommandBufferExecError;
+use command_buffer::Kind;
 use device::Device;
 use device::DeviceOwned;
 use device::Queue;
@@ -721,8 +721,8 @@ impl<P> SyncCommandBufferBuilder<P> {
                 }
 
                 entry.insert(ResourceState {
-                    stages: stages,
-                    access: access,
+                    stages,
+                    access,
                     exclusive_any: actually_exclusive,
                     exclusive: actually_exclusive,
                     initial_layout: actual_start_layout,
@@ -1195,7 +1195,7 @@ impl<P> SyncCommandBuffer<P> {
 
         // If we are going to return an error, we have to unlock all the resources we locked above.
         if let Err(_) = ret_value {
-            for key in self.resources.keys().take(locked_resources) {
+            for (key, val) in self.resources.iter().take(locked_resources) {
                 let (command_ids, resource_ty, resource_index) = match *key {
                     CbKey::Command {
                         ref command_ids,
@@ -1218,8 +1218,13 @@ impl<P> SyncCommandBuffer<P> {
                     KeyTy::Image => {
                         let cmd = &commands_lock[command_ids[0]];
                         let img = cmd.image(resource_index);
+                        let trans = if val.final_layout != val.initial_layout {
+                            Some(val.final_layout)
+                        } else {
+                            None
+                        };
                         unsafe {
-                            img.unlock(None);
+                            img.unlock(trans);
                         }
                     }
                 }

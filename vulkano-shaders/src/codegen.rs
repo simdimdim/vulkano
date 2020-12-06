@@ -1,8 +1,8 @@
 // Copyright (c) 2016 The vulkano developers
 // Licensed under the Apache License, Version 2.0
 // <LICENSE-APACHE or
-// http://www.apache.org/licenses/LICENSE-2.0> or the MIT
-// license <LICENSE-MIT or http://opensource.org/licenses/MIT>,
+// https://www.apache.org/licenses/LICENSE-2.0> or the MIT
+// license <LICENSE-MIT or https://opensource.org/licenses/MIT>,
 // at your option. All files in the project carrying such
 // notice may not be copied, modified, or distributed except
 // according to those terms.
@@ -373,7 +373,7 @@ fn capability_requirement(cap: &Capability) -> DeviceRequirement {
         Capability::CapabilityVector16 => panic!(),  // not supported
         Capability::CapabilityFloat16Buffer => panic!(), // not supported
         Capability::CapabilityFloat16 => panic!(),   // not supported
-        Capability::CapabilityFloat64 => DeviceRequirement::Features(&["shader_f3264"]),
+        Capability::CapabilityFloat64 => DeviceRequirement::Features(&["shader_float64"]),
         Capability::CapabilityInt64 => DeviceRequirement::Features(&["shader_int64"]),
         Capability::CapabilityInt64Atomics => panic!(), // not supported
         Capability::CapabilityImageBasic => panic!(),   // not supported

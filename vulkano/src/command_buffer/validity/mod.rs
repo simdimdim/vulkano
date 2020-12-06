@@ -1,8 +1,8 @@
 // Copyright (c) 2017 The vulkano developers
 // Licensed under the Apache License, Version 2.0
 // <LICENSE-APACHE or
-// http://www.apache.org/licenses/LICENSE-2.0> or the MIT
-// license <LICENSE-MIT or http://opensource.org/licenses/MIT>,
+// https://www.apache.org/licenses/LICENSE-2.0> or the MIT
+// license <LICENSE-MIT or https://opensource.org/licenses/MIT>,
 // at your option. All files in the project carrying such
 // notice may not be copied, modified, or distributed except
 // according to those terms.
@@ -16,6 +16,7 @@ pub use self::copy_image::{check_copy_image, CheckCopyImageError};
 pub use self::copy_image_buffer::{
     check_copy_buffer_image, CheckCopyBufferImageError, CheckCopyBufferImageTy,
 };
+pub use self::debug_marker::{check_debug_marker_color, CheckColorError};
 pub use self::descriptor_sets::{check_descriptor_sets_validity, CheckDescriptorSetsValidityError};
 pub use self::dispatch::{check_dispatch, CheckDispatchError};
 pub use self::dynamic_state::{check_dynamic_state_validity, CheckDynamicStateValidityError};
@@ -30,6 +31,7 @@ mod clear_color_image;
 mod copy_buffer;
 mod copy_image;
 mod copy_image_buffer;
+mod debug_marker;
 mod descriptor_sets;
 mod dispatch;
 mod dynamic_state;

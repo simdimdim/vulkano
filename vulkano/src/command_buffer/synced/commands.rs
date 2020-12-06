@@ -1,8 +1,8 @@
 // Copyright (c) 2016 The vulkano developers
 // Licensed under the Apache License, Version 2.0
 // <LICENSE-APACHE or
-// http://www.apache.org/licenses/LICENSE-2.0> or the MIT
-// license <LICENSE-MIT or http://opensource.org/licenses/MIT>,
+// https://www.apache.org/licenses/LICENSE-2.0> or the MIT
+// license <LICENSE-MIT or https://opensource.org/licenses/MIT>,
 // at your option. All files in the project carrying such
 // notice may not be copied, modified, or distributed except
 // according to those terms.
@@ -28,13 +28,13 @@ use command_buffer::sys::UnsafeCommandBufferBuilderExecuteCommands;
 use command_buffer::sys::UnsafeCommandBufferBuilderImageBlit;
 use command_buffer::sys::UnsafeCommandBufferBuilderImageCopy;
 use command_buffer::CommandBuffer;
+use command_buffer::SubpassContents;
 use descriptor::descriptor::DescriptorDescTy;
 use descriptor::descriptor::ShaderStages;
 use descriptor::descriptor_set::DescriptorSet;
 use descriptor::pipeline_layout::PipelineLayoutAbstract;
 use format::ClearValue;
 use framebuffer::FramebufferAbstract;
-use framebuffer::SubpassContents;
 use image::ImageAccess;
 use image::ImageLayout;
 use pipeline::depth_stencil::DynamicStencilValue;
@@ -45,6 +45,7 @@ use pipeline::viewport::Viewport;
 use pipeline::ComputePipelineAbstract;
 use pipeline::GraphicsPipelineAbstract;
 use sampler::Filter;
+use std::ffi::CStr;
 use sync::AccessFlagBits;
 use sync::Event;
 use sync::PipelineStages;
@@ -1125,6 +1126,92 @@ impl<P> SyncCommandBufferBuilder<P> {
             ImageLayout::Undefined,
         )?;
         Ok(())
+    }
+
+    /// Calls `vkCmdBeginDebugUtilsLabelEXT` on the builder.
+    ///
+    /// # Safety
+    /// The command pool that this command buffer was allocated from must support graphics or
+    /// compute operations
+    #[inline]
+    pub unsafe fn debug_marker_begin(&mut self, name: &'static CStr, color: [f32; 4]) {
+        struct Cmd {
+            name: &'static CStr,
+            color: [f32; 4],
+        }
+
+        impl<P> Command<P> for Cmd {
+            fn name(&self) -> &'static str {
+                "vkCmdBeginDebugUtilsLabelEXT"
+            }
+
+            unsafe fn send(&mut self, out: &mut UnsafeCommandBufferBuilder<P>) {
+                out.debug_marker_begin(self.name, self.color);
+            }
+
+            fn into_final_command(self: Box<Self>) -> Box<dyn FinalCommand + Send + Sync> {
+                Box::new("vkCmdBeginDebugUtilsLabelEXT")
+            }
+        }
+
+        self.append_command(Cmd { name, color });
+    }
+
+    /// Calls `vkCmdEndDebugUtilsLabelEXT` on the builder.
+    ///
+    /// # Safety
+    /// - The command pool that this command buffer was allocated from must support graphics or
+    /// compute operations
+    /// - There must be an outstanding `debug_marker_begin` command prior to the
+    /// `debug_marker_end` on the queue.
+    #[inline]
+    pub unsafe fn debug_marker_end(&mut self) {
+        struct Cmd {}
+
+        impl<P> Command<P> for Cmd {
+            fn name(&self) -> &'static str {
+                "vkCmdEndDebugUtilsLabelEXT"
+            }
+
+            unsafe fn send(&mut self, out: &mut UnsafeCommandBufferBuilder<P>) {
+                out.debug_marker_end();
+            }
+
+            fn into_final_command(self: Box<Self>) -> Box<dyn FinalCommand + Send + Sync> {
+                Box::new("vkCmdEndDebugUtilsLabelEXT")
+            }
+        }
+
+        self.append_command(Cmd {});
+    }
+
+    /// Calls `vkCmdInsertDebugUtilsLabelEXT` on the builder.
+    ///
+    /// # Safety
+    /// The command pool that this command buffer was allocated from must support graphics or
+    /// compute operations
+    #[inline]
+    pub unsafe fn debug_marker_insert(&mut self, name: &'static CStr, color: [f32; 4]) {
+        struct Cmd {
+            name: &'static CStr,
+            color: [f32; 4],
+        }
+
+        impl<P> Command<P> for Cmd {
+            fn name(&self) -> &'static str {
+                "vkCmdInsertDebugUtilsLabelEXT"
+            }
+
+            unsafe fn send(&mut self, out: &mut UnsafeCommandBufferBuilder<P>) {
+                out.debug_marker_insert(self.name, self.color);
+            }
+
+            fn into_final_command(self: Box<Self>) -> Box<dyn FinalCommand + Send + Sync> {
+                Box::new("vkCmdInsertDebugUtilsLabelEXT")
+            }
+        }
+
+        self.append_command(Cmd { name, color });
     }
 
     /// Calls `vkCmdDispatch` on the builder.

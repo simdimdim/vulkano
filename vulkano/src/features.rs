@@ -1,8 +1,8 @@
 // Copyright (c) 2016 The vulkano developers
 // Licensed under the Apache License, Version 2.0
 // <LICENSE-APACHE or
-// http://www.apache.org/licenses/LICENSE-2.0> or the MIT
-// license <LICENSE-MIT or http://opensource.org/licenses/MIT>,
+// https://www.apache.org/licenses/LICENSE-2.0> or the MIT
+// license <LICENSE-MIT or https://opensource.org/licenses/MIT>,
 // at your option. All files in the project carrying such
 // notice may not be copied, modified, or distributed except
 // according to those terms.
@@ -242,7 +242,7 @@ pub struct Features {
     pub shader_storage_image_array_dynamic_indexing: bool,
     pub shader_clip_distance: bool,
     pub shader_cull_distance: bool,
-    pub shader_f3264: bool,
+    pub shader_float64: bool,
     pub shader_int64: bool,
     pub shader_int16: bool,
     pub shader_resource_residency: bool,
@@ -479,7 +479,7 @@ features! {
     core { shader_storage_image_array_dynamic_indexing => shaderStorageImageArrayDynamicIndexing },
     core { shader_clip_distance => shaderClipDistance },
     core { shader_cull_distance => shaderCullDistance },
-    core { shader_f3264 => shaderf3264 },
+    core { shader_float64 => shaderFloat64 },
     core { shader_int64 => shaderInt64 },
     core { shader_int16 => shaderInt16 },
     core { shader_resource_residency => shaderResourceResidency },
